@@ -30,6 +30,12 @@ export class Sprite {
     this.animationSpeed = speed;
   }
 
+  public setFrame(frameIndex: number): void {
+    if (frameIndex >= 0 && frameIndex < this.frameCount) {
+      this.currentFrame = frameIndex;
+    }
+  }
+
   public render(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, flipX: boolean = false): void {
     context.save();
     

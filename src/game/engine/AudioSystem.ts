@@ -79,4 +79,27 @@ export class AudioSystem {
     osc.start();
     osc.stop(this.context.currentTime + 0.1);
   }
+
+  public playPowerUp(): void {
+    if (!this.context || this.isMuted) return;
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+
+    osc.connect(gain);
+    gain.connect(this.context.destination);
+
+    // PowerUp sound: High pitched rising sequence
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, this.context.currentTime);
+    osc.frequency.setValueAtTime(554, this.context.currentTime + 0.1); // C#
+    osc.frequency.setValueAtTime(659, this.context.currentTime + 0.2); // E
+    osc.frequency.setValueAtTime(880, this.context.currentTime + 0.3); // A
+
+    gain.gain.setValueAtTime(0.1, this.context.currentTime);
+    gain.gain.linearRampToValueAtTime(0, this.context.currentTime + 0.4);
+
+    osc.start();
+    osc.stop(this.context.currentTime + 0.4);
+  }
 }

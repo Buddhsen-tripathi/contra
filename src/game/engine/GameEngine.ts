@@ -4,7 +4,9 @@ import { Camera } from './Camera';
 import { Player } from '../entities/Player';
 import { Projectile } from '../entities/Projectile';
 import { Enemy } from '../entities/Enemy';
+import { Turret } from '../entities/Turret';
 import { Boss } from '../entities/Boss';
+import { PowerUp } from '../entities/PowerUp';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { AudioSystem } from './AudioSystem';
@@ -22,6 +24,8 @@ export class GameEngine {
   private player: Player;
   private projectiles: Projectile[] = [];
   private enemies: Enemy[] = [];
+  private turrets: Turret[] = [];
+  private powerUps: PowerUp[] = [];
   private boss: Boss | null = null;
   private currentLevel: LevelData;
   private gameState: 'playing' | 'gameover' | 'victory' = 'playing';
@@ -48,6 +52,10 @@ export class GameEngine {
 
     // Spawn Test Enemies scattered through the level
     this.spawnEnemies();
+    this.spawnTurrets();
+
+    // Spawn Test PowerUp
+    this.powerUps.push(new PowerUp(600, 400));
 
     // Initialize GameLoop
     this.gameLoop = new GameLoop(this.update, this.render);
@@ -70,6 +78,16 @@ export class GameEngine {
     });
   }
 
+  private spawnTurrets(): void {
+    // Spawn turrets on platforms and ground
+    // Platform 1 (y=400)
+    this.turrets.push(new Turret(450, 368, this.player, this.spawnProjectile));
+    // Platform 3 (y=400)
+    this.turrets.push(new Turret(1050, 368, this.player, this.spawnProjectile));
+    // Ground (y=500)
+    this.turrets.push(new Turret(2200, 468, this.player, this.spawnProjectile));
+  }
+
   public start(): void {
     this.gameLoop.start();
   }
@@ -83,6 +101,8 @@ export class GameEngine {
     this.gameState = 'playing';
     this.projectiles = [];
     this.enemies = [];
+    this.turrets = [];
+    this.powerUps = [];
     this.boss = null;
     
     // Reset Player
@@ -93,6 +113,10 @@ export class GameEngine {
     
     // Respawn Enemies
     this.spawnEnemies();
+    this.spawnTurrets();
+
+    // Respawn PowerUp
+    this.powerUps.push(new PowerUp(600, 400));
   }
 
   private update = (deltaTime: number): void => {
@@ -131,6 +155,12 @@ export class GameEngine {
       this.boss.update(deltaTime);
     }
 
+    // Update Turrets
+    this.turrets.forEach(t => t.update(deltaTime));
+
+    // Update PowerUps
+    this.powerUps.forEach(p => p.update(deltaTime));
+
     // Update projectiles
     this.projectiles.forEach(p => p.update(deltaTime));
     
@@ -153,6 +183,16 @@ export class GameEngine {
           if (CollisionSystem.checkAABB(projectile, enemy)) {
             projectile.active = false;
             enemy.takeDamage(1);
+            this.audioSystem.playEnemyHit();
+          }
+        });
+
+        // Vs Turrets
+        this.turrets.forEach(turret => {
+          if (!turret.active) return;
+          if (CollisionSystem.checkAABB(projectile, turret)) {
+            projectile.active = false;
+            turret.takeDamage(1);
             this.audioSystem.playEnemyHit();
           }
         });
@@ -194,6 +234,19 @@ export class GameEngine {
       }
     });
 
+    // Collision Detection: Player vs Turrets
+    this.turrets.forEach(turret => {
+      if (!turret.active) return;
+      if (CollisionSystem.checkAABB(this.player, turret)) {
+        if (this.player.takeDamage()) {
+          if (this.player.lives <= 0) {
+            this.gameState = 'gameover';
+          }
+          this.audioSystem.playEnemyHit();
+        }
+      }
+    });
+
     // Collision Detection: Player vs Boss Body
     if (this.boss && this.boss.active && CollisionSystem.checkAABB(this.player, this.boss)) {
        if (this.player.takeDamage()) {
@@ -204,9 +257,20 @@ export class GameEngine {
        }
     }
 
+    // Collision Detection: Player vs PowerUps
+    this.powerUps.forEach(p => {
+      if (!p.active) return;
+      if (CollisionSystem.checkAABB(this.player, p)) {
+        p.active = false;
+        this.player.equipWeapon(p.type);
+      }
+    });
+
     // Cleanup inactive entities
     this.projectiles = this.projectiles.filter(p => p.active);
     this.enemies = this.enemies.filter(e => e.active);
+    this.turrets = this.turrets.filter(t => t.active);
+    this.powerUps = this.powerUps.filter(p => p.active);
 
     // Clear frame inputs
     this.inputHandler.update();
@@ -231,6 +295,12 @@ export class GameEngine {
 
     // Render Enemies
     this.enemies.forEach(e => e.render(this.context));
+
+    // Render Turrets
+    this.turrets.forEach(t => t.render(this.context));
+
+    // Render PowerUps
+    this.powerUps.forEach(p => p.render(this.context));
 
     // Render Boss
     if (this.boss && this.boss.active) {

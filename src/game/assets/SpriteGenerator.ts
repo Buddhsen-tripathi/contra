@@ -170,4 +170,68 @@ export class SpriteGenerator {
     img.src = canvas.toDataURL();
     return img;
   }
+
+  public static generatePowerUpSprite(): HTMLImageElement {
+    // 24x24 sprite, 1 frame (floating icon)
+    const width = 24;
+    const height = 24;
+    const canvas = this.createBuffer(width, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    // Background (Winged capsule shape)
+    ctx.fillStyle = '#ff0000'; // Red background
+    ctx.beginPath();
+    ctx.ellipse(12, 12, 12, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Letter 'S'
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('S', 12, 13);
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
+
+  public static generateTurretSprite(): HTMLImageElement {
+    // 32x32 sprite, 1 frame (base + rotating gun)
+    // Actually, let's just draw it facing left for now
+    const width = 32;
+    const height = 32;
+    const canvas = this.createBuffer(width, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    // Base
+    ctx.fillStyle = '#444444';
+    ctx.beginPath();
+    ctx.arc(16, 24, 12, Math.PI, 0); // Semi-circle base
+    ctx.fill();
+
+    // Gun Mount
+    ctx.fillStyle = '#888888';
+    ctx.beginPath();
+    ctx.arc(16, 16, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Barrel (pointing left default)
+    ctx.fillStyle = '#222222';
+    ctx.fillRect(4, 12, 12, 8);
+
+    // Red light/sensor
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(14, 14, 4, 4);
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
 }

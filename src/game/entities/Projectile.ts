@@ -1,22 +1,22 @@
 import { Entity } from '../core/Entity';
 
 export class Projectile extends Entity {
-  private speed: number = 600;
   public active: boolean = true;
   public isEnemy: boolean = false; // Default to player projectile
-  private direction: number;
 
-  constructor(x: number, y: number, direction: number, isEnemy: boolean = false) {
+  constructor(x: number, y: number, vx: number, vy: number, isEnemy: boolean = false) {
     super(x, y, 8, 8); // Small square
-    this.direction = direction;
+    this.vx = vx;
+    this.vy = vy;
     this.isEnemy = isEnemy;
   }
 
   update(deltaTime: number): void {
-    this.x += this.speed * this.direction * deltaTime;
+    this.x += this.vx * deltaTime;
+    this.y += this.vy * deltaTime;
     
     // Simple bounds check (expanded for full level width)
-    if (this.x < -100 || this.x > 5000) {
+    if (this.x < -100 || this.x > 5000 || this.y < -100 || this.y > 1000) {
       this.active = false;
     }
   }

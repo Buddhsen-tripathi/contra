@@ -19,6 +19,9 @@ export class Player extends Entity {
   private fireCooldown: number = 0;
   private readonly FIRE_RATE: number = 0.15; // Seconds between shots
   private onShoot: (projectile: Projectile) => void;
+  
+  // Weapon System
+  private weaponType: 'normal' | 'spread' = 'normal';
 
   // Health & Lives
   public lives: number = 3;
@@ -89,17 +92,37 @@ export class Player extends Entity {
     this.isInvulnerable = true;
     this.invulnerabilityTimer = this.INVULNERABILITY_DURATION;
     
+    // Lose power-up on hit
+    this.weaponType = 'normal';
+
     // Knockback (optional, simple jump)
     this.vy = -300;
     
     return true; // Damage taken
   }
 
+  public equipWeapon(type: 'normal' | 'spread'): void {
+    this.weaponType = type;
+    this.audio.playPowerUp(); // Assuming we add this sound later, or reuse jump for now
+  }
+
   private shoot(): void {
     const bulletX = this.facingDirection === 1 ? this.x + this.width : this.x - 8;
     const bulletY = this.y + 22; // Adjusted for sprite gun position
-    const projectile = new Projectile(bulletX, bulletY, this.facingDirection);
-    this.onShoot(projectile);
+    const speed = 600;
+
+    if (this.weaponType === 'spread') {
+      // Spread Gun: 5 bullets fan
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, 0));
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, -150));
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, 150));
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, -300));
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, 300));
+    } else {
+      // Normal Gun
+      this.onShoot(new Projectile(bulletX, bulletY, speed * this.facingDirection, 0));
+    }
+    
     this.audio.playShoot();
     this.fireCooldown = this.FIRE_RATE;
   }
