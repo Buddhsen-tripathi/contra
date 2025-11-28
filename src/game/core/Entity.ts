@@ -10,6 +10,7 @@ export abstract class Entity implements IEntity {
   public height: number;
   public vx: number = 0;
   public vy: number = 0;
+  public isGrounded: boolean = false;
 
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;

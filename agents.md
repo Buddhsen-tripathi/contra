@@ -23,5 +23,14 @@ Build a browser-playable, Contra-style side-scrolling shooter with safe, origina
 - **Milestone 2 Completed**: Player Entity and Basic Movement (Left/Right) implemented.
 - **Milestone 3 Completed**: Physics System (Gravity & Jumping) implemented.
 - **Milestone 4 Completed**: Shooting Mechanics (Projectiles) implemented.
-- **Next Step**: Milestone 5 - Basic Enemy & Collision.
+- **Milestone 5 Completed**: Basic Enemy & Collision implemented.
+- **Milestone 6 Completed**: Level Structure & Camera Scrolling implemented.
+- **Milestone 7 Completed**: Platform Collision & Physics Refinement implemented.
+- **Milestone 8 Completed**: Visual Polish (Sprites & Animations) implemented.
+- **Milestone 9 Completed**: Audio System (Sound Effects) implemented.
+- **Milestone 10 Completed**: Game Over & Restart Logic implemented.
+- **Milestone 11 Completed**: Player Lives & Health System implemented.
+- **Milestone 12 Completed**: Boss Battle & Victory Condition implemented.
+- **Final Polish Completed**: UI Instructions added, bugs fixed.
+- **Project Status**: Complete & Playable.
 - Project initialized.

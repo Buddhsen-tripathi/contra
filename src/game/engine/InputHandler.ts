@@ -1,5 +1,6 @@
 export class InputHandler {
   private keys: Set<string> = new Set();
+  private pressed: Set<string> = new Set();
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -15,7 +16,14 @@ export class InputHandler {
     }
   }
 
+  public update(): void {
+    this.pressed.clear();
+  }
+
   private handleKeyDown = (event: KeyboardEvent): void => {
+    if (!this.keys.has(event.code)) {
+      this.pressed.add(event.code);
+    }
     this.keys.add(event.code);
   };
 
@@ -25,6 +33,10 @@ export class InputHandler {
 
   public isKeyDown(code: string): boolean {
     return this.keys.has(code);
+  }
+
+  public isJustPressed(code: string): boolean {
+    return this.pressed.has(code);
   }
 
   // Helper for common movement keys
@@ -48,5 +60,9 @@ export class InputHandler {
 
   public isFirePressed(): boolean {
     return this.isKeyDown('KeyJ') || this.isKeyDown('KeyZ');
+  }
+
+  public isRestartPressed(): boolean {
+    return this.isKeyDown('KeyR');
   }
 }
