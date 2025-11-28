@@ -9,6 +9,7 @@ import { Turret } from '../entities/Turret';
 import { Boss } from '../entities/Boss';
 import { AlienHeart } from '../entities/AlienHeart';
 import { PowerUp } from '../entities/PowerUp';
+import { HeartDrop } from '../entities/HeartDrop';
 import { Explosion } from '../entities/Explosion';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
@@ -30,11 +31,13 @@ export class GameEngine {
   private enemies: (Enemy | Drone)[] = [];
   private turrets: Turret[] = [];
   private powerUps: PowerUp[] = [];
+  private heartDrops: HeartDrop[] = [];
   private explosions: Explosion[] = [];
   private boss: Boss | AlienHeart | null = null;
   private currentLevel: LevelData;
   private levelIndex: number = 0;
   private score: number = 0;
+  private highScore: number = 0;
   private levels: LevelData[] = [Level1, Level2];
   private gameState: 'playing' | 'gameover' | 'victory' | 'level_transition' = 'playing';
 
@@ -45,6 +48,16 @@ export class GameEngine {
       throw new Error('Could not get 2D context from canvas');
     }
     this.context = ctx;
+
+    // Load High Score
+    try {
+      const saved = localStorage.getItem('contra-highscore');
+      if (saved) {
+        this.highScore = parseInt(saved, 10);
+      }
+    } catch (e) {
+      console.warn('Failed to load high score', e);
+    }
 
     // Load Level
     this.currentLevel = this.levels[this.levelIndex];
@@ -61,9 +74,7 @@ export class GameEngine {
     // Spawn Test Enemies scattered through the level
     this.spawnEnemies();
     this.spawnTurrets();
-
-    // Spawn Test PowerUp
-    this.powerUps.push(new PowerUp(600, 400));
+    this.spawnPowerUps();
 
     // Initialize GameLoop
     this.gameLoop = new GameLoop(this.update, this.render);
@@ -74,6 +85,17 @@ export class GameEngine {
     });
   }
 
+  private checkHighScore(): void {
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      try {
+        localStorage.setItem('contra-highscore', this.highScore.toString());
+      } catch (e) {
+        console.warn('Failed to save high score', e);
+      }
+    }
+  }
+
   private loadNextLevel(): void {
     this.levelIndex++;
     if (this.levelIndex < this.levels.length) {
@@ -82,6 +104,7 @@ export class GameEngine {
       this.gameState = 'playing'; // Or 'level_transition' if we want a screen
     } else {
       this.gameState = 'victory';
+      this.checkHighScore();
     }
   }
 
@@ -90,6 +113,7 @@ export class GameEngine {
     this.enemies = [];
     this.turrets = [];
     this.powerUps = [];
+    this.heartDrops = [];
     this.explosions = [];
     this.boss = null;
     
@@ -104,9 +128,7 @@ export class GameEngine {
     // Respawn Entities
     this.spawnEnemies();
     this.spawnTurrets();
-
-    // Spawn PowerUp (maybe random?)
-    this.powerUps.push(new PowerUp(600, 400));
+    this.spawnPowerUps();
   }
 
   private spawnProjectile = (projectile: Projectile): void => {
@@ -132,6 +154,14 @@ export class GameEngine {
     this.currentLevel.turrets.forEach(t => {
       this.turrets.push(new Turret(t.x, t.y, this.player, this.audioSystem, this.spawnProjectile));
     });
+  }
+
+  private spawnPowerUps(): void {
+    if (this.currentLevel.powerUps) {
+      this.currentLevel.powerUps.forEach(p => {
+        this.powerUps.push(new PowerUp(p.x, p.y, p.type));
+      });
+    }
   }
 
   public start(): void {
@@ -204,6 +234,9 @@ export class GameEngine {
     // Update PowerUps
     this.powerUps.forEach(p => p.update(deltaTime));
 
+    // Update HeartDrops
+    this.heartDrops.forEach(h => h.update(deltaTime));
+
     // Update Explosions
     this.explosions.forEach(ex => ex.update(deltaTime));
 
@@ -235,6 +268,7 @@ export class GameEngine {
             if (!enemy.active) {
               this.score += 100;
               this.spawnExplosion(enemy.x, enemy.y);
+              this.heartDrops.push(new HeartDrop(enemy.x, enemy.y));
             }
           }
         });
@@ -249,6 +283,7 @@ export class GameEngine {
             if (!turret.active) {
               this.score += 200;
               this.spawnExplosion(turret.x, turret.y);
+              this.heartDrops.push(new HeartDrop(turret.x, turret.y));
             }
           }
         });
@@ -276,6 +311,7 @@ export class GameEngine {
           if (this.player.takeDamage()) {
             if (this.player.lives <= 0) {
               this.gameState = 'gameover';
+              this.checkHighScore();
             }
             this.audioSystem.playEnemyHit();
           }
@@ -290,6 +326,7 @@ export class GameEngine {
         if (this.player.takeDamage()) {
           if (this.player.lives <= 0) {
             this.gameState = 'gameover';
+            this.checkHighScore();
           }
           this.audioSystem.playEnemyHit();
         }
@@ -303,6 +340,7 @@ export class GameEngine {
         if (this.player.takeDamage()) {
           if (this.player.lives <= 0) {
             this.gameState = 'gameover';
+            this.checkHighScore();
           }
           this.audioSystem.playEnemyHit();
         }
@@ -314,6 +352,7 @@ export class GameEngine {
        if (this.player.takeDamage()) {
           if (this.player.lives <= 0) {
             this.gameState = 'gameover';
+            this.checkHighScore();
           }
           this.audioSystem.playEnemyHit();
        }
@@ -328,11 +367,24 @@ export class GameEngine {
       }
     });
 
+    // Collision Detection: Player vs HeartDrops
+    this.heartDrops.forEach(h => {
+      if (!h.active) return;
+      if (CollisionSystem.checkAABB(this.player, h)) {
+        h.active = false;
+        if (this.player.lives < 5) {
+          this.player.lives++;
+          this.audioSystem.playLifeUp();
+        }
+      }
+    });
+
     // Cleanup inactive entities
     this.projectiles = this.projectiles.filter(p => p.active);
     this.enemies = this.enemies.filter(e => e.active);
     this.turrets = this.turrets.filter(t => t.active);
     this.powerUps = this.powerUps.filter(p => p.active);
+    this.heartDrops = this.heartDrops.filter(h => h.active);
     this.explosions = this.explosions.filter(e => e.active);
 
     // Clear frame inputs
@@ -365,6 +417,9 @@ export class GameEngine {
     // Render PowerUps
     this.powerUps.forEach(p => p.render(this.context));
 
+    // Render HeartDrops
+    this.heartDrops.forEach(h => h.render(this.context));
+
     // Render Boss
     if (this.boss && this.boss.active) {
       this.boss.render(this.context);
@@ -386,11 +441,14 @@ export class GameEngine {
       this.context.fillStyle = '#ff0000';
       this.context.font = '48px monospace';
       this.context.textAlign = 'center';
-      this.context.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
+      this.context.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 40);
       
       this.context.fillStyle = '#ffffff';
       this.context.font = '24px monospace';
-      this.context.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 50);
+      this.context.fillText(`SCORE: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+      this.context.fillText(`HIGH SCORE: ${this.highScore}`, this.canvas.width / 2, this.canvas.height / 2 + 40);
+      
+      this.context.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 90);
       this.context.textAlign = 'left'; // Reset alignment
     } else if (this.gameState === 'level_transition') {
       this.context.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -399,7 +457,11 @@ export class GameEngine {
       this.context.fillStyle = '#ffff00';
       this.context.font = '48px monospace';
       this.context.textAlign = 'center';
-      this.context.fillText('LEVEL COMPLETE', this.canvas.width / 2, this.canvas.height / 2);
+      this.context.fillText('LEVEL COMPLETE', this.canvas.width / 2, this.canvas.height / 2 - 20);
+      
+      this.context.fillStyle = '#ffffff';
+      this.context.font = '24px monospace';
+      this.context.fillText(`SCORE: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 30);
       this.context.textAlign = 'left'; // Reset alignment
     } else if (this.gameState === 'victory') {
       this.context.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -408,11 +470,14 @@ export class GameEngine {
       this.context.fillStyle = '#00ff00';
       this.context.font = '48px monospace';
       this.context.textAlign = 'center';
-      this.context.fillText('MISSION ACCOMPLISHED', this.canvas.width / 2, this.canvas.height / 2);
+      this.context.fillText('MISSION ACCOMPLISHED', this.canvas.width / 2, this.canvas.height / 2 - 40);
       
       this.context.fillStyle = '#ffffff';
       this.context.font = '24px monospace';
-      this.context.fillText('Press R to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 50);
+      this.context.fillText(`FINAL SCORE: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+      this.context.fillText(`HIGH SCORE: ${this.highScore}`, this.canvas.width / 2, this.canvas.height / 2 + 40);
+
+      this.context.fillText('Press R to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 90);
       this.context.textAlign = 'left'; // Reset alignment
     } else {
       // Draw HUD / Instructions
@@ -427,9 +492,27 @@ export class GameEngine {
       // Score / Status (Top Right)
       this.context.textAlign = 'right';
       this.context.fillText(`SCORE: ${this.score.toString().padStart(6, '0')}`, this.canvas.width - 10, 20);
-      this.context.fillText(`LEVEL: ${this.levelIndex + 1}`, this.canvas.width - 10, 40);
-      this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 60);
-      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 80);
+      this.context.fillText(`HI: ${this.highScore.toString().padStart(6, '0')}`, this.canvas.width - 10, 40);
+      this.context.fillText(`LEVEL: ${this.levelIndex + 1}`, this.canvas.width - 10, 60);
+      
+      // Draw Lives as Hearts
+      // this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 80);
+      const heartSize = 10;
+      const startX = this.canvas.width - 10 - (this.player.lives * (heartSize + 2));
+      const startY = 70;
+      
+      this.context.fillStyle = '#ff0000';
+      for (let i = 0; i < this.player.lives; i++) {
+        const x = startX + i * (heartSize + 2);
+        // Simple heart shape using rectangles
+        this.context.fillRect(x + 2, startY, 2, 2);
+        this.context.fillRect(x + 6, startY, 2, 2);
+        this.context.fillRect(x, startY + 2, 10, 2);
+        this.context.fillRect(x + 2, startY + 4, 6, 2);
+        this.context.fillRect(x + 4, startY + 6, 2, 2);
+      }
+
+      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 100);
       this.context.textAlign = 'left'; // Reset
     }
   };

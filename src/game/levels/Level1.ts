@@ -22,6 +22,12 @@ export interface BossSpawn {
   type: 'wall' | 'heart';
 }
 
+export interface PowerUpSpawn {
+  x: number;
+  y: number;
+  type: 'spread';
+}
+
 export interface LevelTheme {
   background: string;
   ground: string;
@@ -36,6 +42,7 @@ export interface LevelData {
   platforms: Platform[];
   enemies: EnemySpawn[];
   turrets: TurretSpawn[];
+  powerUps?: PowerUpSpawn[];
   boss?: BossSpawn;
   theme: LevelTheme;
 }
@@ -68,6 +75,9 @@ export const Level1: LevelData = {
     { x: 450, y: 368 },
     { x: 1050, y: 368 },
     { x: 2200, y: 468 }
+  ],
+  powerUps: [
+    { x: 600, y: 400, type: 'spread' }
   ],
   boss: { x: 2800, y: 404, type: 'wall' }
 };

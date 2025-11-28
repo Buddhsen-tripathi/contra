@@ -144,4 +144,32 @@ export class AudioSystem {
     osc.start();
     osc.stop(this.context.currentTime + 0.15);
   }
+
+  public playLifeUp(): void {
+    if (!this.context || this.isMuted) return;
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+
+    osc.connect(gain);
+    gain.connect(this.context.destination);
+
+    // Life Up: 1-Up sound (Mario-ish arpeggio)
+    osc.type = 'square';
+    const now = this.context.currentTime;
+
+    osc.frequency.setValueAtTime(659, now); // E5
+    osc.frequency.setValueAtTime(784, now + 0.1); // G5
+    osc.frequency.setValueAtTime(1318, now + 0.2); // E6
+    osc.frequency.setValueAtTime(1046, now + 0.3); // C6
+    osc.frequency.setValueAtTime(1568, now + 0.4); // G6
+    osc.frequency.setValueAtTime(2093, now + 0.5); // C7
+
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0.1, now + 0.5);
+    gain.gain.linearRampToValueAtTime(0, now + 0.6);
+
+    osc.start();
+    osc.stop(now + 0.6);
+  }
 }

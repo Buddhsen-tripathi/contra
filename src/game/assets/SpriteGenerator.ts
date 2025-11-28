@@ -394,4 +394,29 @@ export class SpriteGenerator {
     img.src = canvas.toDataURL();
     return img;
   }
+
+  public static generateHeartSprite(): HTMLImageElement {
+    // 16x16 sprite, 1 frame
+    const width = 16;
+    const height = 16;
+    const canvas = this.createBuffer(width, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    // Heart Shape
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.moveTo(8, 14);
+    ctx.bezierCurveTo(16, 8, 16, 2, 8, 4);
+    ctx.bezierCurveTo(0, 2, 0, 8, 8, 14);
+    ctx.fill();
+
+    // Shine
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(4, 4, 2, 2);
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
 }

@@ -48,5 +48,8 @@ export const Level2: LevelData = {
     { x: 1650, y: 368 }, // Lower platform
     { x: 2450, y: 268 }  // Final platform
   ],
+  powerUps: [
+    { x: 2600, y: 300, type: 'spread' }
+  ],
   boss: { x: 2800, y: 300, type: 'heart' } // Floating heart
 };
