@@ -42,7 +42,7 @@ export class AlienHeart extends Entity {
     const dy = (this.player.y + this.player.height / 2) - centerY;
     const angle = Math.atan2(dy, dx);
 
-    const speed = 250;
+    const speed = 215;
     const angles = [angle - 0.3, angle, angle + 0.3];
 
     angles.forEach(a => {

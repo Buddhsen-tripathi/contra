@@ -34,6 +34,7 @@ export class GameEngine {
   private boss: Boss | AlienHeart | null = null;
   private currentLevel: LevelData;
   private levelIndex: number = 0;
+  private score: number = 0;
   private levels: LevelData[] = [Level1, Level2];
   private gameState: 'playing' | 'gameover' | 'victory' | 'level_transition' = 'playing';
 
@@ -145,6 +146,7 @@ export class GameEngine {
   private reset(): void {
     this.gameState = 'playing';
     this.levelIndex = 0;
+    this.score = 0;
     this.currentLevel = this.levels[0];
     
     // Reset Player (Full reset including lives)
@@ -231,6 +233,7 @@ export class GameEngine {
             enemy.takeDamage(1);
             this.audioSystem.playEnemyHit();
             if (!enemy.active) {
+              this.score += 100;
               this.spawnExplosion(enemy.x, enemy.y);
             }
           }
@@ -244,6 +247,7 @@ export class GameEngine {
             turret.takeDamage(1);
             this.audioSystem.playEnemyHit();
             if (!turret.active) {
+              this.score += 200;
               this.spawnExplosion(turret.x, turret.y);
             }
           }
@@ -255,6 +259,7 @@ export class GameEngine {
           this.boss.takeDamage(1);
           this.audioSystem.playEnemyHit();
           if (!this.boss.active) {
+            this.score += 1000;
             this.spawnExplosion(this.boss.x + this.boss.width / 2 - 16, this.boss.y + this.boss.height / 2 - 16);
             this.gameState = 'level_transition';
             
@@ -421,9 +426,10 @@ export class GameEngine {
       
       // Score / Status (Top Right)
       this.context.textAlign = 'right';
-      this.context.fillText(`LEVEL: ${this.levelIndex + 1}`, this.canvas.width - 10, 20);
-      this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 40);
-      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 60);
+      this.context.fillText(`SCORE: ${this.score.toString().padStart(6, '0')}`, this.canvas.width - 10, 20);
+      this.context.fillText(`LEVEL: ${this.levelIndex + 1}`, this.canvas.width - 10, 40);
+      this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 60);
+      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 80);
       this.context.textAlign = 'left'; // Reset
     }
   };

@@ -46,7 +46,7 @@ export class Turret extends Entity {
     const dirX = dx / dist;
     const dirY = dy / dist;
     
-    const speed = 300; // Slower than player bullets
+    const speed = 260; // Slower than player bullets
     const bulletX = this.x + 16;
     const bulletY = this.y + 16;
 

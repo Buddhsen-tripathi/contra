@@ -44,8 +44,8 @@ export class Boss extends Entity {
     const bulletX = this.x;
     
     // Create enemy projectile (isEnemy = true)
-    // Speed -600 (left), vy 0
-    const p = new Projectile(bulletX, bulletY, -600, 0, true); 
+    // Speed -510 (left), vy 0
+    const p = new Projectile(bulletX, bulletY, -510, 0, true); 
     
     this.onShoot(p);
   }
