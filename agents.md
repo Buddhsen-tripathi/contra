@@ -36,6 +36,10 @@ Build a browser-playable, Contra-style side-scrolling shooter with safe, origina
 - **Milestone 15 Completed**: Visual Polish (Explosions) implemented.
 - **Milestone 16 Completed**: Audio Polish (Explosion & Turret Sounds) implemented.
 - **Milestone 17 Completed**: Level System Refactor & Level 2 implemented.
+- **Milestone 18 Completed**: Visual Variety (Level Themes) implemented.
+- **Milestone 19 Completed**: New Enemy Type (Flying Drones) implemented.
+- **Milestone 20 Completed**: Level 2 Boss (Giant Alien Heart) implemented.
+- **Bug Fix**: Fixed restart freeze issue.
 - **Final Polish Completed**: UI Instructions added, bugs fixed.
 - **Project Status**: Complete & Playable.
 - Project initialized.

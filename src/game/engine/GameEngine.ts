@@ -4,8 +4,10 @@ import { Camera } from './Camera';
 import { Player } from '../entities/Player';
 import { Projectile } from '../entities/Projectile';
 import { Enemy } from '../entities/Enemy';
+import { Drone } from '../entities/Drone';
 import { Turret } from '../entities/Turret';
 import { Boss } from '../entities/Boss';
+import { AlienHeart } from '../entities/AlienHeart';
 import { PowerUp } from '../entities/PowerUp';
 import { Explosion } from '../entities/Explosion';
 import { CollisionSystem } from '../systems/CollisionSystem';
@@ -25,11 +27,11 @@ export class GameEngine {
   
   private player: Player;
   private projectiles: Projectile[] = [];
-  private enemies: Enemy[] = [];
+  private enemies: (Enemy | Drone)[] = [];
   private turrets: Turret[] = [];
   private powerUps: PowerUp[] = [];
   private explosions: Explosion[] = [];
-  private boss: Boss | null = null;
+  private boss: Boss | AlienHeart | null = null;
   private currentLevel: LevelData;
   private levelIndex: number = 0;
   private levels: LevelData[] = [Level1, Level2];
@@ -117,7 +119,11 @@ export class GameEngine {
 
   private spawnEnemies(): void {
     this.currentLevel.enemies.forEach(e => {
-      this.enemies.push(new Enemy(e.x, e.y));
+      if (e.type === 'drone') {
+        this.enemies.push(new Drone(e.x, e.y, this.player));
+      } else {
+        this.enemies.push(new Enemy(e.x, e.y));
+      }
     });
   }
 
@@ -151,6 +157,7 @@ export class GameEngine {
     // Global Restart Check
     if (this.inputHandler.isJustPressed('KeyR')) {
       this.reset();
+      this.inputHandler.update(); // Clear input state to prevent infinite reset loop
       return;
     }
 
@@ -177,7 +184,11 @@ export class GameEngine {
 
     // Spawn Boss if near end
     if (!this.boss && this.currentLevel.boss && this.player.x > this.currentLevel.width - 400) {
-      this.boss = new Boss(this.currentLevel.boss.x, this.currentLevel.boss.y, this.spawnProjectile);
+      if (this.currentLevel.boss.type === 'heart') {
+        this.boss = new AlienHeart(this.currentLevel.boss.x, this.currentLevel.boss.y, this.player, this.spawnProjectile);
+      } else {
+        this.boss = new Boss(this.currentLevel.boss.x, this.currentLevel.boss.y, this.spawnProjectile);
+      }
     }
 
     // Update Boss
@@ -200,8 +211,10 @@ export class GameEngine {
     // Update enemies
     this.enemies.forEach(e => {
       e.update(deltaTime);
-      // Apply physics to enemies too (so they fall if they walk off edges)
-      this.physicsSystem.update(e, this.currentLevel, deltaTime);
+      // Apply physics to enemies (walkers) only
+      if (!(e instanceof Drone)) {
+        this.physicsSystem.update(e, this.currentLevel, deltaTime);
+      }
     });
 
     // Collision Detection: Projectiles
@@ -322,8 +335,8 @@ export class GameEngine {
   };
 
   private render = (): void => {
-    // Clear screen
-    this.context.fillStyle = '#000000';
+    // Clear screen with level background color
+    this.context.fillStyle = this.currentLevel.theme.background;
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.context.save();
@@ -417,19 +430,19 @@ export class GameEngine {
 
   private renderLevel(): void {
     // Draw Ground
-    this.context.fillStyle = '#333333';
+    this.context.fillStyle = this.currentLevel.theme.ground;
     this.context.fillRect(0, this.currentLevel.groundY, this.currentLevel.width, this.currentLevel.height - this.currentLevel.groundY);
     
-    // Draw Green Line on top of ground
+    // Draw Accent Line on top of ground
     this.context.beginPath();
     this.context.moveTo(0, this.currentLevel.groundY);
     this.context.lineTo(this.currentLevel.width, this.currentLevel.groundY);
-    this.context.strokeStyle = '#00ff00';
+    this.context.strokeStyle = this.currentLevel.theme.accent;
     this.context.lineWidth = 2;
     this.context.stroke();
 
     // Draw Platforms
-    this.context.fillStyle = '#555555';
+    this.context.fillStyle = this.currentLevel.theme.platform;
     this.currentLevel.platforms.forEach(platform => {
       this.context.fillRect(platform.x, platform.y, platform.width, platform.height);
     });

@@ -4,6 +4,12 @@ export const Level2: LevelData = {
   width: 3000,
   height: 600,
   groundY: 500,
+  theme: {
+    background: '#000022', // Dark Blue
+    ground: '#444455',     // Blue-Grey
+    platform: '#666688',   // Light Blue-Grey
+    accent: '#ff0000'      // Red
+  },
   platforms: [
     // Staircase up
     { x: 300, y: 400, width: 100, height: 20 },
@@ -26,9 +32,12 @@ export const Level2: LevelData = {
   ],
   enemies: [
     { x: 500, y: 436, type: 'walker' },
+    { x: 800, y: 300, type: 'drone' }, // Flying drone
     { x: 900, y: 136, type: 'walker' }, // On high platform
+    { x: 1200, y: 250, type: 'drone' }, // Flying drone
     { x: 1400, y: 436, type: 'walker' },
     { x: 1700, y: 336, type: 'walker' }, // On platform
+    { x: 1900, y: 200, type: 'drone' }, // Flying drone
     { x: 2000, y: 436, type: 'walker' },
     { x: 2300, y: 436, type: 'walker' },
     { x: 2600, y: 436, type: 'walker' }
@@ -39,5 +48,5 @@ export const Level2: LevelData = {
     { x: 1650, y: 368 }, // Lower platform
     { x: 2450, y: 268 }  // Final platform
   ],
-  boss: { x: 2800, y: 404 }
+  boss: { x: 2800, y: 300, type: 'heart' } // Floating heart
 };

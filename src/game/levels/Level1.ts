@@ -8,7 +8,7 @@ export interface Platform {
 export interface EnemySpawn {
   x: number;
   y: number;
-  type: 'walker';
+  type: 'walker' | 'drone';
 }
 
 export interface TurretSpawn {
@@ -19,6 +19,7 @@ export interface TurretSpawn {
 export interface BossSpawn {
   x: number;
   y: number;
+  type: 'wall' | 'heart';
 }
 
 export interface LevelTheme {
@@ -68,5 +69,5 @@ export const Level1: LevelData = {
     { x: 1050, y: 368 },
     { x: 2200, y: 468 }
   ],
-  boss: { x: 2800, y: 404 }
+  boss: { x: 2800, y: 404, type: 'wall' }
 };

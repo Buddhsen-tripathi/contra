@@ -297,4 +297,101 @@ export class SpriteGenerator {
     img.src = canvas.toDataURL();
     return img;
   }
+
+  public static generateDroneSprite(): HTMLImageElement {
+    // 32x32 sprite, 2 frames (hover)
+    const width = 32;
+    const height = 32;
+    const canvas = this.createBuffer(width * 2, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    for (let i = 0; i < 2; i++) {
+      const offsetX = i * width;
+      const yOffset = i === 0 ? 0 : 2; // Bobbing effect
+
+      // Body (Sphere)
+      ctx.fillStyle = '#8888aa'; // Blue-ish metal
+      ctx.beginPath();
+      ctx.arc(offsetX + 16, 16 + yOffset, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eye (Red)
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(offsetX + 16, 16 + yOffset, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Propellers/Wings
+      ctx.fillStyle = '#444444';
+      ctx.fillRect(offsetX + 2, 14 + yOffset, 8, 4); // Left
+      ctx.fillRect(offsetX + 22, 14 + yOffset, 8, 4); // Right
+      
+      // Antenna
+      ctx.strokeStyle = '#aaaaaa';
+      ctx.beginPath();
+      ctx.moveTo(offsetX + 16, 6 + yOffset);
+      ctx.lineTo(offsetX + 16, 2 + yOffset);
+      ctx.stroke();
+    }
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
+
+  public static generateAlienHeartSprite(): HTMLImageElement {
+    // 128x128 sprite, 2 frames (Pulsating)
+    const width = 128;
+    const height = 128;
+    const canvas = this.createBuffer(width * 2, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    for (let i = 0; i < 2; i++) {
+      const offsetX = i * width;
+      const scale = i === 0 ? 1 : 1.1; // Pulse scale
+      
+      const centerX = offsetX + 64;
+      const centerY = 64;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.scale(scale, scale);
+      ctx.translate(-centerX, -centerY);
+
+      // Heart Shape
+      ctx.fillStyle = '#aa0000'; // Dark Red
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY + 40);
+      ctx.bezierCurveTo(centerX + 50, centerY, centerX + 60, centerY - 40, centerX, centerY - 20);
+      ctx.bezierCurveTo(centerX - 60, centerY - 40, centerX - 50, centerY, centerX, centerY + 40);
+      ctx.fill();
+
+      // Veins
+      ctx.strokeStyle = '#ff0000'; // Bright Red
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY + 30);
+      ctx.lineTo(centerX, centerY - 10);
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + 20, centerY - 10);
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX - 20, centerY - 10);
+      ctx.stroke();
+
+      // Eyes (Alien features)
+      ctx.fillStyle = '#ffff00'; // Yellow eyes
+      ctx.beginPath();
+      ctx.ellipse(centerX - 20, centerY - 20, 8, 12, -0.2, 0, Math.PI * 2);
+      ctx.ellipse(centerX + 20, centerY - 20, 8, 12, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
 }
