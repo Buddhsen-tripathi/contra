@@ -234,4 +234,67 @@ export class SpriteGenerator {
     img.src = canvas.toDataURL();
     return img;
   }
+
+  public static generateExplosionSprite(): HTMLImageElement {
+    // 32x32 sprite, 4 frames
+    const width = 32;
+    const height = 32;
+    const canvas = this.createBuffer(width * 4, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get context');
+
+    for (let i = 0; i < 4; i++) {
+      const offsetX = i * width;
+      const centerX = offsetX + 16;
+      const centerY = 16;
+      
+      // Colors
+      const inner = '#ffff00'; // Yellow
+      const mid = '#ff8800'; // Orange
+      const outer = '#ff0000'; // Red
+      const smoke = '#888888'; // Grey
+
+      if (i === 0) {
+        // Small spark
+        ctx.fillStyle = inner;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (i === 1) {
+        // Expanding fireball
+        ctx.fillStyle = mid;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = inner;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (i === 2) {
+        // Large fireball
+        ctx.fillStyle = outer;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = mid;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Dissipating smoke
+        ctx.fillStyle = smoke;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = outer; // Fading core
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+  }
 }

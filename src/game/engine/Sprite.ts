@@ -7,22 +7,32 @@ export class Sprite {
   private animationSpeed: number; // frames per second
   private timer: number = 0;
   private isPlaying: boolean = true;
+  private loop: boolean = true;
+  public isFinished: boolean = false;
 
-  constructor(image: HTMLImageElement, frameWidth: number, frameHeight: number, animationSpeed: number = 8) {
+  constructor(image: HTMLImageElement, frameWidth: number, frameHeight: number, animationSpeed: number = 8, loop: boolean = true) {
     this.image = image;
     this.frameWidth = frameWidth;
     this.frameHeight = frameHeight;
     this.frameCount = Math.floor(image.width / frameWidth);
     this.animationSpeed = animationSpeed;
+    this.loop = loop;
   }
 
   public update(deltaTime: number): void {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying || this.isFinished) return;
 
     this.timer += deltaTime;
     if (this.timer >= 1 / this.animationSpeed) {
       this.timer = 0;
-      this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+      if (this.currentFrame < this.frameCount - 1) {
+        this.currentFrame++;
+      } else if (this.loop) {
+        this.currentFrame = 0;
+      } else {
+        this.isFinished = true;
+        this.isPlaying = false;
+      }
     }
   }
 

@@ -3,21 +3,24 @@ import { Sprite } from '../engine/Sprite';
 import { SpriteGenerator } from '../assets/SpriteGenerator';
 import { Projectile } from './Projectile';
 import { Player } from './Player';
+import { AudioSystem } from '../engine/AudioSystem';
 
 export class Turret extends Entity {
   public active: boolean = true;
   public hp: number = 5;
   private sprite: Sprite;
   private player: Player;
+  private audioSystem: AudioSystem;
   private onShoot: (projectile: Projectile) => void;
   
   private fireTimer: number = 0;
   private readonly FIRE_RATE: number = 2.0; // Seconds
   private readonly RANGE: number = 600;
 
-  constructor(x: number, y: number, player: Player, onShoot: (p: Projectile) => void) {
+  constructor(x: number, y: number, player: Player, audioSystem: AudioSystem, onShoot: (p: Projectile) => void) {
     super(x, y, 32, 32);
     this.player = player;
+    this.audioSystem = audioSystem;
     this.onShoot = onShoot;
     this.sprite = new Sprite(SpriteGenerator.generateTurretSprite(), 32, 32, 1);
   }
@@ -49,6 +52,7 @@ export class Turret extends Entity {
 
     const p = new Projectile(bulletX, bulletY, dirX * speed, dirY * speed, true);
     this.onShoot(p);
+    this.audioSystem.playTurretShoot();
   }
 
   takeDamage(amount: number): void {

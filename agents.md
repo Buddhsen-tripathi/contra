@@ -33,6 +33,9 @@ Build a browser-playable, Contra-style side-scrolling shooter with safe, origina
 - **Milestone 12 Completed**: Boss Battle & Victory Condition implemented.
 - **Milestone 13 Completed**: Power-ups (Spread Gun) implemented.
 - **Milestone 14 Completed**: Turrets (Stationary Enemies) implemented.
+- **Milestone 15 Completed**: Visual Polish (Explosions) implemented.
+- **Milestone 16 Completed**: Audio Polish (Explosion & Turret Sounds) implemented.
+- **Milestone 17 Completed**: Level System Refactor & Level 2 implemented.
 - **Final Polish Completed**: UI Instructions added, bugs fixed.
 - **Project Status**: Complete & Playable.
 - Project initialized.

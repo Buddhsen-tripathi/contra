@@ -7,10 +7,12 @@ import { Enemy } from '../entities/Enemy';
 import { Turret } from '../entities/Turret';
 import { Boss } from '../entities/Boss';
 import { PowerUp } from '../entities/PowerUp';
+import { Explosion } from '../entities/Explosion';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { AudioSystem } from './AudioSystem';
 import { Level1, LevelData } from '../levels/Level1';
+import { Level2 } from '../levels/Level2';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -26,9 +28,12 @@ export class GameEngine {
   private enemies: Enemy[] = [];
   private turrets: Turret[] = [];
   private powerUps: PowerUp[] = [];
+  private explosions: Explosion[] = [];
   private boss: Boss | null = null;
   private currentLevel: LevelData;
-  private gameState: 'playing' | 'gameover' | 'victory' = 'playing';
+  private levelIndex: number = 0;
+  private levels: LevelData[] = [Level1, Level2];
+  private gameState: 'playing' | 'gameover' | 'victory' | 'level_transition' = 'playing';
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -39,7 +44,7 @@ export class GameEngine {
     this.context = ctx;
 
     // Load Level
-    this.currentLevel = Level1;
+    this.currentLevel = this.levels[this.levelIndex];
 
     // Initialize Systems
     this.inputHandler = new InputHandler();
@@ -66,26 +71,60 @@ export class GameEngine {
     });
   }
 
+  private loadNextLevel(): void {
+    this.levelIndex++;
+    if (this.levelIndex < this.levels.length) {
+      this.currentLevel = this.levels[this.levelIndex];
+      this.resetLevelState();
+      this.gameState = 'playing'; // Or 'level_transition' if we want a screen
+    } else {
+      this.gameState = 'victory';
+    }
+  }
+
+  private resetLevelState(): void {
+    this.projectiles = [];
+    this.enemies = [];
+    this.turrets = [];
+    this.powerUps = [];
+    this.explosions = [];
+    this.boss = null;
+    
+    // Reset Player Position but keep lives/weapon? 
+    // For now, full reset of player position
+    this.player.x = 50;
+    this.player.y = 450;
+    
+    // Reset Camera
+    this.camera = new Camera(this.canvas.width, this.canvas.height);
+    
+    // Respawn Entities
+    this.spawnEnemies();
+    this.spawnTurrets();
+
+    // Spawn PowerUp (maybe random?)
+    this.powerUps.push(new PowerUp(600, 400));
+  }
+
   private spawnProjectile = (projectile: Projectile): void => {
     this.projectiles.push(projectile);
   };
 
+  private spawnExplosion(x: number, y: number): void {
+    this.explosions.push(new Explosion(x, y));
+    this.audioSystem.playExplosion();
+  }
+
   private spawnEnemies(): void {
-    // Spawn enemies at various X positions
-    const enemyPositions = [700, 1200, 1800, 2500];
-    enemyPositions.forEach(x => {
-      this.enemies.push(new Enemy(x, 436));
+    this.currentLevel.enemies.forEach(e => {
+      this.enemies.push(new Enemy(e.x, e.y));
     });
   }
 
   private spawnTurrets(): void {
-    // Spawn turrets on platforms and ground
-    // Platform 1 (y=400)
-    this.turrets.push(new Turret(450, 368, this.player, this.spawnProjectile));
-    // Platform 3 (y=400)
-    this.turrets.push(new Turret(1050, 368, this.player, this.spawnProjectile));
-    // Ground (y=500)
-    this.turrets.push(new Turret(2200, 468, this.player, this.spawnProjectile));
+    this.currentLevel.turrets.forEach(t => {
+      this.turrets.push(new Turret(t.x, t.y, this.player, this.audioSystem, this.spawnProjectile));
+    });
   }
 
   public start(): void {
@@ -99,24 +138,13 @@ export class GameEngine {
 
   private reset(): void {
     this.gameState = 'playing';
-    this.projectiles = [];
-    this.enemies = [];
-    this.turrets = [];
-    this.powerUps = [];
-    this.boss = null;
+    this.levelIndex = 0;
+    this.currentLevel = this.levels[0];
     
-    // Reset Player
+    // Reset Player (Full reset including lives)
     this.player = new Player(50, 450, this.inputHandler, this.audioSystem, this.spawnProjectile);
     
-    // Reset Camera
-    this.camera = new Camera(this.canvas.width, this.canvas.height);
-    
-    // Respawn Enemies
-    this.spawnEnemies();
-    this.spawnTurrets();
-
-    // Respawn PowerUp
-    this.powerUps.push(new PowerUp(600, 400));
+    this.resetLevelState();
   }
 
   private update = (deltaTime: number): void => {
@@ -126,8 +154,10 @@ export class GameEngine {
       return;
     }
 
-    if (this.gameState === 'gameover' || this.gameState === 'victory') {
+    if (this.gameState === 'gameover' || this.gameState === 'victory' || this.gameState === 'level_transition') {
       this.inputHandler.update();
+      // Continue updating explosions for visual flair
+      this.explosions.forEach(ex => ex.update(deltaTime));
       return;
     }
 
@@ -146,8 +176,8 @@ export class GameEngine {
     this.camera.follow(this.player, this.currentLevel.width, this.currentLevel.height);
 
     // Spawn Boss if near end
-    if (!this.boss && this.player.x > 2600) {
-      this.boss = new Boss(2800, 404, this.spawnProjectile); // 404 = 500 (ground) - 96 (height)
+    if (!this.boss && this.currentLevel.boss && this.player.x > this.currentLevel.width - 400) {
+      this.boss = new Boss(this.currentLevel.boss.x, this.currentLevel.boss.y, this.spawnProjectile);
     }
 
     // Update Boss
@@ -160,6 +190,9 @@ export class GameEngine {
 
     // Update PowerUps
     this.powerUps.forEach(p => p.update(deltaTime));
+
+    // Update Explosions
+    this.explosions.forEach(ex => ex.update(deltaTime));
 
     // Update projectiles
     this.projectiles.forEach(p => p.update(deltaTime));
@@ -184,6 +217,9 @@ export class GameEngine {
             projectile.active = false;
             enemy.takeDamage(1);
             this.audioSystem.playEnemyHit();
+            if (!enemy.active) {
+              this.spawnExplosion(enemy.x, enemy.y);
+            }
           }
         });
 
@@ -194,6 +230,9 @@ export class GameEngine {
             projectile.active = false;
             turret.takeDamage(1);
             this.audioSystem.playEnemyHit();
+            if (!turret.active) {
+              this.spawnExplosion(turret.x, turret.y);
+            }
           }
         });
 
@@ -203,7 +242,12 @@ export class GameEngine {
           this.boss.takeDamage(1);
           this.audioSystem.playEnemyHit();
           if (!this.boss.active) {
-            this.gameState = 'victory';
+            this.spawnExplosion(this.boss.x + this.boss.width / 2 - 16, this.boss.y + this.boss.height / 2 - 16);
+            this.gameState = 'level_transition';
+            
+            setTimeout(() => {
+               this.loadNextLevel();
+            }, 3000);
           }
         }
       } 
@@ -271,6 +315,7 @@ export class GameEngine {
     this.enemies = this.enemies.filter(e => e.active);
     this.turrets = this.turrets.filter(t => t.active);
     this.powerUps = this.powerUps.filter(p => p.active);
+    this.explosions = this.explosions.filter(e => e.active);
 
     // Clear frame inputs
     this.inputHandler.update();
@@ -310,6 +355,9 @@ export class GameEngine {
     // Render Projectiles
     this.projectiles.forEach(p => p.render(this.context));
 
+    // Render Explosions
+    this.explosions.forEach(ex => ex.render(this.context));
+
     this.context.restore();
 
     // UI Overlay
@@ -325,6 +373,15 @@ export class GameEngine {
       this.context.fillStyle = '#ffffff';
       this.context.font = '24px monospace';
       this.context.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 50);
+      this.context.textAlign = 'left'; // Reset alignment
+    } else if (this.gameState === 'level_transition') {
+      this.context.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      this.context.fillStyle = '#ffff00';
+      this.context.font = '48px monospace';
+      this.context.textAlign = 'center';
+      this.context.fillText('LEVEL COMPLETE', this.canvas.width / 2, this.canvas.height / 2);
       this.context.textAlign = 'left'; // Reset alignment
     } else if (this.gameState === 'victory') {
       this.context.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -351,8 +408,9 @@ export class GameEngine {
       
       // Score / Status (Top Right)
       this.context.textAlign = 'right';
-      this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 20);
-      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 40);
+      this.context.fillText(`LEVEL: ${this.levelIndex + 1}`, this.canvas.width - 10, 20);
+      this.context.fillText(`LIVES: ${this.player.lives}`, this.canvas.width - 10, 40);
+      this.context.fillText(`ENEMIES: ${this.enemies.length}`, this.canvas.width - 10, 60);
       this.context.textAlign = 'left'; // Reset
     }
   };

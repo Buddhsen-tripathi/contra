@@ -102,4 +102,46 @@ export class AudioSystem {
     osc.start();
     osc.stop(this.context.currentTime + 0.4);
   }
+
+  public playExplosion(): void {
+    if (!this.context || this.isMuted) return;
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+
+    osc.connect(gain);
+    gain.connect(this.context.destination);
+
+    // Explosion: Low frequency sawtooth dropping pitch + noise simulation
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(10, this.context.currentTime + 0.3);
+
+    gain.gain.setValueAtTime(0.3, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.3);
+
+    osc.start();
+    osc.stop(this.context.currentTime + 0.3);
+  }
+
+  public playTurretShoot(): void {
+    if (!this.context || this.isMuted) return;
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+
+    osc.connect(gain);
+    gain.connect(this.context.destination);
+
+    // Turret: Lower pitch "Thump"
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, this.context.currentTime + 0.15);
+
+    gain.gain.setValueAtTime(0.1, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
+
+    osc.start();
+    osc.stop(this.context.currentTime + 0.15);
+  }
 }
